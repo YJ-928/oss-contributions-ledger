@@ -1,0 +1,31 @@
+name: Upstream Ledger
+description: Keep a durable record of your open-source pull requests and issues in CONTRIBUTIONS.md.
+author: Yash B Joshi
+branding:
+  icon: book-open
+  color: purple
+
+inputs:
+  username:
+    description: GitHub login whose contributions are recorded.
+    default: ${{ github.repository_owner }}
+  token:
+    description: Token used for the GitHub GraphQL API. The workflow's own token is enough for public work.
+    default: ${{ github.token }}
+  ledger:
+    description: Path of the ledger data file. Commit it; it is the durable record.
+    default: ledger.json
+  output:
+    description: Path of the rendered Markdown.
+    default: CONTRIBUTIONS.md
+  exclude:
+    description: Comma-separated repositories to leave out, as "owner/repo" or "owner/*".
+    default: ""
+
+outputs:
+  changed:
+    description: "\"true\" when the ledger or the Markdown changed."
+
+runs:
+  using: docker
+  image: Dockerfile
