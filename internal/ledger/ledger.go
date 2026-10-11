@@ -19,6 +19,7 @@ type Kind string
 const (
 	KindPullRequest Kind = "pull_request"
 	KindIssue       Kind = "issue"
+	KindDiscussion  Kind = "discussion"
 )
 
 type Ref struct {

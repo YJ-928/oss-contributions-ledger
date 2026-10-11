@@ -7,6 +7,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -26,9 +27,11 @@ func TestMarkdownGolden(t *testing.T) {
 			URL: "https://github.com/zigflow/zigflow/issues/493", CreatedAt: *at("2026-06-21"), ClosedAt: at("2026-06-25")},
 		{Kind: KindIssue, Repo: "zigflow/zigflow", Number: 608, Title: "input ignored", State: "CLOSED", StateReason: "COMPLETED",
 			URL: "https://github.com/zigflow/zigflow/issues/608", CreatedAt: *at("2026-09-29"), ClosedAt: at("2026-09-30")},
+		{Kind: KindDiscussion, Repo: "zigflow/zigflow", Number: 525, Title: "for and try blocks", State: "OPEN",
+			URL: "https://github.com/zigflow/zigflow/issues/525", CreatedAt: *at("2026-09-01")},
 	})
 
-	got := l.Markdown()
+	got := l.Markdown("")
 	golden := filepath.Join("testdata", "contributions.golden.md")
 	if *update {
 		if err := os.WriteFile(golden, []byte(got), 0o644); err != nil {
@@ -49,5 +52,16 @@ func TestPlural(t *testing.T) {
 		if got := plural(in, "repository"); got != want {
 			t.Errorf("plural(%d) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestMarkdownHeaderReplacesTitle(t *testing.T) {
+	l := &Ledger{}
+	got := l.Markdown("# My work\n\nMaintainer of a/b.\n\n")
+	if !strings.HasPrefix(got, "# My work\n\nMaintainer of a/b.\n\n**0 merged pull requests**") {
+		t.Fatalf("header not placed first:\n%s", got)
+	}
+	if strings.Contains(got, "# Open-source contributions") {
+		t.Fatal("default title must not appear when a header is given")
 	}
 }

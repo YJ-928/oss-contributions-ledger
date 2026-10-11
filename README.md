@@ -2,7 +2,8 @@
 
 A GitHub Action that keeps a durable, text-first record of your open-source work in other
 people's repositories. It writes `CONTRIBUTIONS.md`: your pull requests (with the issues they
-fixed) and the issues you reported (with their outcome), grouped by repository.
+fixed), the issues you reported (with their outcome), and optionally the issues you took part in,
+grouped by repository.
 
 The data behind it lives in a committed `ledger.json`. Each run adds new work and updates what
 changed, but never drops an entry. A pull request to a repository that is later deleted,
@@ -51,6 +52,8 @@ Then link it from your README: `[All contributions](CONTRIBUTIONS.md)`.
 | `ledger` | `ledger.json` | Path of the data file. Commit it: it is the durable record |
 | `output` | `CONTRIBUTIONS.md` | Path of the rendered Markdown |
 | `exclude` | | Repositories to leave out, as `owner/repo` or `owner/*`, comma-separated |
+| `discussions` | `false` | `true` also records issues you commented on without opening them |
+| `header` | | Markdown file shown at the top instead of the default title, for example your roles |
 
 Output `changed` is `"true"` when the ledger or the Markdown changed, so the workflow commits only
 then. Unchanged runs produce byte-identical files.

@@ -28,11 +28,21 @@ func run() error {
 	ledgerPath := flag.String("ledger", env("INPUT_LEDGER", "ledger.json"), "path of the ledger data file")
 	output := flag.String("output", env("INPUT_OUTPUT", "CONTRIBUTIONS.md"), "path of the rendered Markdown")
 	exclude := flag.String("exclude", os.Getenv("INPUT_EXCLUDE"), `comma-separated "owner/repo" or "owner/*" to leave out`)
+	discussions := flag.Bool("discussions", env("INPUT_DISCUSSIONS", "false") == "true", "also record issues the user commented on")
+	headerPath := flag.String("header", os.Getenv("INPUT_HEADER"), "Markdown file shown at the top instead of the default title")
 	flag.Parse()
 
 	token := env("INPUT_TOKEN", os.Getenv("GITHUB_TOKEN"))
 	if *user == "" || token == "" {
 		return errors.New("a username and a token (GITHUB_TOKEN) are required")
+	}
+	header := ""
+	if *headerPath != "" {
+		data, err := os.ReadFile(*headerPath)
+		if err != nil {
+			return fmt.Errorf("header: %w", err)
+		}
+		header = string(data)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -42,7 +52,7 @@ func run() error {
 		Token:    token,
 		HTTP:     &http.Client{Timeout: 30 * time.Second},
 	}
-	fresh, err := client.Contributions(ctx, *user)
+	fresh, err := client.Contributions(ctx, *user, *discussions)
 	if err != nil {
 		return err
 	}
@@ -58,7 +68,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	docChanged, err := ledger.WriteIfChanged(*output, []byte(l.Markdown()))
+	docChanged, err := ledger.WriteIfChanged(*output, []byte(l.Markdown(header)))
 	if err != nil {
 		return err
 	}

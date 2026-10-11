@@ -1,6 +1,6 @@
 # Open-source contributions
 
-**1 merged pull request** across **2 repositories**, and **2 issues** reported.
+**1 merged pull request** across **2 repositories**, and **2 issues** reported. Took part in **1 discussion**.
 
 ## [zigflow/zigflow](https://github.com/zigflow/zigflow)
 
@@ -17,6 +17,12 @@
 |---|---|---|---|
 | [#608](https://github.com/zigflow/zigflow/issues/608) | 2026-09-29 | input ignored | Completed 2026-09-30 |
 | [#493](https://github.com/zigflow/zigflow/issues/493) | 2026-06-21 | dropped task | Closed as not planned |
+
+### Discussions
+
+| Issue | Title | Status |
+|---|---|---|
+| [#525](https://github.com/zigflow/zigflow/issues/525) | for and try blocks | Open |
 
 ## [solo/repo](https://github.com/solo/repo)
 

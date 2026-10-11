@@ -57,7 +57,7 @@ func TestContributionsPaginatesAndParses(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{Endpoint: srv.URL, Token: "tok", HTTP: srv.Client()}
-	got, err := c.Contributions(context.Background(), "YJ-928")
+	got, err := c.Contributions(context.Background(), "YJ-928", false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestContributionsSurfacesGraphQLErrors(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{Endpoint: srv.URL, Token: "tok", HTTP: srv.Client()}
-	if _, err := c.Contributions(context.Background(), "u"); err == nil || !strings.Contains(err.Error(), "rate limited") {
+	if _, err := c.Contributions(context.Background(), "u", false); err == nil || !strings.Contains(err.Error(), "rate limited") {
 		t.Fatalf("err = %v, want the GraphQL error", err)
 	}
 }
@@ -96,7 +96,40 @@ func TestContributionsFailsOnHTTPError(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{Endpoint: srv.URL, Token: "bad", HTTP: srv.Client()}
-	if _, err := c.Contributions(context.Background(), "u"); err == nil || !strings.Contains(err.Error(), "401") {
+	if _, err := c.Contributions(context.Background(), "u", false); err == nil || !strings.Contains(err.Error(), "401") {
 		t.Fatalf("err = %v, want HTTP 401", err)
+	}
+}
+
+func TestContributionsWithDiscussions(t *testing.T) {
+	var queries []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables struct {
+				Q string `json:"q"`
+			} `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		queries = append(queries, body.Variables.Q)
+		if strings.Contains(body.Variables.Q, "commenter:") {
+			fmt.Fprint(w, issuePage)
+			return
+		}
+		fmt.Fprint(w, `{"data":{"search":{"pageInfo":{"hasNextPage":false},"nodes":[]}}}`)
+	}))
+	defer srv.Close()
+
+	c := &Client{Endpoint: srv.URL, Token: "tok", HTTP: srv.Client()}
+	got, err := c.Contributions(context.Background(), "u", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "is:issue commenter:u -author:u -user:u"; len(queries) != 3 || queries[2] != want {
+		t.Fatalf("queries = %q, want the third to be %q", queries, want)
+	}
+	if len(got) != 1 || got[0].Kind != KindDiscussion {
+		t.Fatalf("got %+v, want one discussion", got)
 	}
 }

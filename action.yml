@@ -21,6 +21,12 @@ inputs:
   exclude:
     description: Comma-separated repositories to leave out, as "owner/repo" or "owner/*".
     default: ""
+  discussions:
+    description: "\"true\" to also record issues you commented on without opening."
+    default: "false"
+  header:
+    description: Path of a Markdown file shown at the top instead of the default title.
+    default: ""
 
 outputs:
   changed:

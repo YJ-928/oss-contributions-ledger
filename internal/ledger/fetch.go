@@ -70,13 +70,23 @@ type searchResponse struct {
 	} `json:"errors"`
 }
 
-// Contributions returns the user's pull requests and issues in repositories they do not own.
-func (c *Client) Contributions(ctx context.Context, user string) ([]Entry, error) {
+type query struct {
+	search string
+	kind   Kind
+}
+
+// Contributions returns the user's pull requests and issues in repositories they do not own,
+// and, with discussions, the issues there they commented on without opening.
+func (c *Client) Contributions(ctx context.Context, user string, discussions bool) ([]Entry, error) {
+	queries := []query{
+		{fmt.Sprintf("is:pr author:%s -user:%s", user, user), KindPullRequest},
+		{fmt.Sprintf("is:issue author:%s -user:%s", user, user), KindIssue},
+	}
+	if discussions {
+		queries = append(queries, query{fmt.Sprintf("is:issue commenter:%s -author:%s -user:%s", user, user, user), KindDiscussion})
+	}
 	var entries []Entry
-	for _, q := range []string{
-		fmt.Sprintf("is:pr author:%s -user:%s", user, user),
-		fmt.Sprintf("is:issue author:%s -user:%s", user, user),
-	} {
+	for _, q := range queries {
 		found, err := c.search(ctx, q)
 		if err != nil {
 			return nil, err
@@ -86,16 +96,19 @@ func (c *Client) Contributions(ctx context.Context, user string) ([]Entry, error
 	return entries, nil
 }
 
-func (c *Client) search(ctx context.Context, q string) ([]Entry, error) {
+func (c *Client) search(ctx context.Context, q query) ([]Entry, error) {
 	var entries []Entry
 	var after *string
 	for {
-		resp, err := c.post(ctx, map[string]any{"query": searchQuery, "variables": map[string]any{"q": q, "after": after}})
+		resp, err := c.post(ctx, map[string]any{"query": searchQuery, "variables": map[string]any{"q": q.search, "after": after}})
 		if err != nil {
 			return nil, err
 		}
 		for _, n := range resp.Data.Search.Nodes {
 			if e, ok := n.entry(); ok {
+				if e.Kind == KindIssue {
+					e.Kind = q.kind
+				}
 				entries = append(entries, e)
 			}
 		}
