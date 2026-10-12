@@ -21,12 +21,6 @@ type repoGroup struct {
 // Markdown renders the ledger as CONTRIBUTIONS.md; a non-empty header replaces the default title.
 func (l *Ledger) Markdown(header string) string {
 	groups := l.groups()
-	merged, issues, discussions := 0, 0, 0
-	for _, g := range groups {
-		merged += g.merged
-		issues += len(g.issues)
-		discussions += len(g.discussions)
-	}
 
 	var b strings.Builder
 	if header = strings.TrimSpace(header); header != "" {
@@ -34,11 +28,7 @@ func (l *Ledger) Markdown(header string) string {
 	} else {
 		b.WriteString("# Open-source contributions\n\n")
 	}
-	fmt.Fprintf(&b, "**%s** across **%s**, and **%s** reported.",
-		plural(merged, "merged pull request"), plural(len(groups), "repository"), plural(issues, "issue"))
-	if discussions > 0 {
-		fmt.Fprintf(&b, " Took part in **%s**.", plural(discussions, "discussion"))
-	}
+	b.WriteString(l.summary())
 	b.WriteString("\n")
 	for _, g := range groups {
 		fmt.Fprintf(&b, "\n## [%s](https://github.com/%s)\n", g.name, g.name)
@@ -62,6 +52,23 @@ func (l *Ledger) Markdown(header string) string {
 		}
 	}
 	return b.String()
+}
+
+// summary is the one-line count of merged pull requests, repositories, issues and discussions.
+func (l *Ledger) summary() string {
+	groups := l.groups()
+	merged, issues, discussions := 0, 0, 0
+	for _, g := range groups {
+		merged += g.merged
+		issues += len(g.issues)
+		discussions += len(g.discussions)
+	}
+	s := fmt.Sprintf("**%s** across **%s**, and **%s** reported.",
+		plural(merged, "merged pull request"), plural(len(groups), "repository"), plural(issues, "issue"))
+	if discussions > 0 {
+		s += fmt.Sprintf(" Took part in **%s**.", plural(discussions, "discussion"))
+	}
+	return s
 }
 
 func (l *Ledger) groups() []*repoGroup {

@@ -27,10 +27,16 @@ inputs:
   header:
     description: Path of a Markdown file shown at the top instead of the default title.
     default: ""
+  readme:
+    description: Path of a file, usually README.md, whose marked block gets the summary and the latest merged pull requests.
+    default: ""
+  readme-latest:
+    description: How many latest merged pull requests the README block lists.
+    default: "3"
 
 outputs:
   changed:
-    description: "\"true\" when the ledger or the Markdown changed."
+    description: "\"true\" when the ledger, the Markdown or the README changed."
 
 runs:
   using: docker

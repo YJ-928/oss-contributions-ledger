@@ -36,7 +36,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ledger.json CONTRIBUTIONS.md
+          git add ledger.json CONTRIBUTIONS.md README.md
           git commit -m "chore: update the contributions ledger"
           git push
 ```
@@ -54,9 +54,33 @@ Then link it from your README: `[All contributions](CONTRIBUTIONS.md)`.
 | `exclude` | | Repositories to leave out, as `owner/repo` or `owner/*`, comma-separated |
 | `discussions` | `false` | `true` also records issues you commented on without opening them |
 | `header` | | Markdown file shown at the top instead of the default title, for example your roles |
+| `readme` | | A file, usually `README.md`, whose marked block gets the summary and your latest merged pull requests |
+| `readme-latest` | `3` | How many latest merged pull requests the README block lists |
 
-Output `changed` is `"true"` when the ledger or the Markdown changed, so the workflow commits only
+Output `changed` is `"true"` when the ledger, the Markdown or the README changed, so the workflow commits only
 then. Unchanged runs produce byte-identical files.
+
+## Show it on your profile README
+
+Add the markers where the block should go:
+
+```markdown
+<!-- oss-contributions-ledger:start -->
+<!-- oss-contributions-ledger:end -->
+```
+
+Then set `readme: README.md` and add `README.md` to the files the workflow commits. Each run
+rewrites only the text between the markers, for example:
+
+```markdown
+**10 merged pull requests** across **1 repository**, and **3 issues** reported.
+
+Latest merged:
+
+- [zigflow/zigflow#626](https://github.com/zigflow/zigflow/pull/626): refactor!: remove the GetVersion gates (2026-10-12)
+```
+
+If the markers are missing, the run leaves the file alone and prints a warning.
 
 ## Run it locally
 

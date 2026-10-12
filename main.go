@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -30,11 +31,17 @@ func run() error {
 	exclude := flag.String("exclude", os.Getenv("INPUT_EXCLUDE"), `comma-separated "owner/repo" or "owner/*" to leave out`)
 	discussions := flag.Bool("discussions", env("INPUT_DISCUSSIONS", "false") == "true", "also record issues the user commented on")
 	headerPath := flag.String("header", os.Getenv("INPUT_HEADER"), "Markdown file shown at the top instead of the default title")
+	readme := flag.String("readme", os.Getenv("INPUT_README"), "file whose marked block gets the summary and latest merged pull requests")
+	readmeLatest := flag.String("readme-latest", env("INPUT_README_LATEST", "3"), "how many latest merged pull requests the block lists")
 	flag.Parse()
 
 	token := env("INPUT_TOKEN", os.Getenv("GITHUB_TOKEN"))
 	if *user == "" || token == "" {
 		return errors.New("a username and a token (GITHUB_TOKEN) are required")
+	}
+	latest, err := strconv.Atoi(strings.TrimSpace(*readmeLatest))
+	if err != nil || latest < 0 {
+		return fmt.Errorf("readme-latest must be a whole number, got %q", *readmeLatest)
 	}
 	header := ""
 	if *headerPath != "" {
@@ -72,7 +79,16 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	changed := dataChanged || docChanged
+	readmeChanged := false
+	if *readme != "" {
+		readmeChanged, err = ledger.UpdateReadme(*readme, l.ReadmeBlock(latest))
+		if errors.Is(err, ledger.ErrNoMarkers) {
+			fmt.Printf("::warning::%s has no %s marker; add %s and %s where the block should go\n", *readme, ledger.ReadmeStart, ledger.ReadmeStart, ledger.ReadmeEnd)
+		} else if err != nil {
+			return err
+		}
+	}
+	changed := dataChanged || docChanged || readmeChanged
 	fmt.Printf("oss-contributions-ledger: %d entries, changed=%t\n", len(l.Entries), changed)
 	return setOutput("changed", fmt.Sprint(changed))
 }
