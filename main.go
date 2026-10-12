@@ -13,12 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/YJ-928/upstream-ledger/internal/ledger"
+	"github.com/YJ-928/oss-contributions-ledger/internal/ledger"
 )
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, "upstream-ledger:", err)
+		fmt.Fprintln(os.Stderr, "oss-contributions-ledger:", err)
 		os.Exit(1)
 	}
 }
@@ -73,7 +73,7 @@ func run() error {
 		return err
 	}
 	changed := dataChanged || docChanged
-	fmt.Printf("upstream-ledger: %d entries, changed=%t\n", len(l.Entries), changed)
+	fmt.Printf("oss-contributions-ledger: %d entries, changed=%t\n", len(l.Entries), changed)
 	return setOutput("changed", fmt.Sprint(changed))
 }
 

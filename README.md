@@ -1,4 +1,4 @@
-# upstream-ledger
+# oss-contributions-ledger
 
 A GitHub Action that keeps a durable, text-first record of your open-source work in other
 people's repositories. It writes `CONTRIBUTIONS.md`: your pull requests (with the issues they
@@ -31,7 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - id: ledger
-        uses: YJ-928/upstream-ledger@v1
+        uses: YJ-928/oss-contributions-ledger@v1
       - if: steps.ledger.outputs.changed == 'true'
         run: |
           git config user.name "github-actions[bot]"

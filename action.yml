@@ -1,5 +1,5 @@
-name: Upstream Ledger
-description: Keep a durable record of your open-source pull requests and issues in CONTRIBUTIONS.md.
+name: OSS Contributions Ledger
+description: Keep a permanent record of your open-source contributions in CONTRIBUTIONS.md and your profile README.
 author: Yash B Joshi
 branding:
   icon: book-open

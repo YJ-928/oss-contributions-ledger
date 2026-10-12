@@ -1,4 +1,4 @@
-# upstream-ledger: plan
+# oss-contributions-ledger: plan
 
 A GitHub Action that keeps a durable, text-first record of your open-source work in other
 people's repositories: pull requests (with the issues they fixed), issues you reported (with
