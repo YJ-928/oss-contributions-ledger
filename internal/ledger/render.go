@@ -15,6 +15,7 @@ type repoGroup struct {
 	prs         []Entry
 	issues      []Entry
 	discussions []Entry
+	reviews     []Entry
 	merged      int
 }
 
@@ -50,6 +51,12 @@ func (l *Ledger) Markdown(header string) string {
 				fmt.Fprintf(&b, "| [#%d](%s) | %s | %s |\n", e.Number, e.URL, cell(e.Title), issueOutcome(e))
 			}
 		}
+		if len(g.reviews) > 0 {
+			b.WriteString("\n### Reviews given\n\n| PR | Author | Title | Status |\n|---|---|---|---|\n")
+			for _, e := range g.reviews {
+				fmt.Fprintf(&b, "| [#%d](%s) | %s | %s | %s |\n", e.Number, e.URL, login(e.Author), cell(e.Title), prStatus(e))
+			}
+		}
 	}
 	return b.String()
 }
@@ -57,16 +64,20 @@ func (l *Ledger) Markdown(header string) string {
 // summary is the one-line count of merged pull requests, repositories, issues and discussions.
 func (l *Ledger) summary() string {
 	groups := l.groups()
-	merged, issues, discussions := 0, 0, 0
+	merged, issues, discussions, reviews := 0, 0, 0, 0
 	for _, g := range groups {
 		merged += g.merged
 		issues += len(g.issues)
 		discussions += len(g.discussions)
+		reviews += len(g.reviews)
 	}
 	s := fmt.Sprintf("**%s** across **%s**, and **%s** reported.",
 		plural(merged, "merged pull request"), plural(len(groups), "repository"), plural(issues, "issue"))
 	if discussions > 0 {
 		s += fmt.Sprintf(" Took part in **%s**.", plural(discussions, "discussion"))
+	}
+	if reviews > 0 {
+		s += fmt.Sprintf(" Reviewed **%s**.", plural(reviews, "pull request"))
 	}
 	return s
 }
@@ -91,12 +102,15 @@ func (l *Ledger) groups() []*repoGroup {
 			g.issues = append(g.issues, e)
 		case KindDiscussion:
 			g.discussions = append(g.discussions, e)
+		case KindReview:
+			g.reviews = append(g.reviews, e)
 		}
 	}
 	for _, g := range groups {
 		sort.Slice(g.prs, func(i, j int) bool { return g.prs[i].Number > g.prs[j].Number })
 		sort.Slice(g.issues, func(i, j int) bool { return g.issues[i].Number > g.issues[j].Number })
 		sort.Slice(g.discussions, func(i, j int) bool { return g.discussions[i].Number > g.discussions[j].Number })
+		sort.Slice(g.reviews, func(i, j int) bool { return g.reviews[i].Number > g.reviews[j].Number })
 	}
 	sort.SliceStable(groups, func(i, j int) bool {
 		if groups[i].merged != groups[j].merged {
@@ -132,6 +146,14 @@ func issueOutcome(e Entry) string {
 	default:
 		return dated("Closed", e.ClosedAt)
 	}
+}
+
+// login links a GitHub user; a deleted account has no login.
+func login(name string) string {
+	if name == "" {
+		return "ghost"
+	}
+	return fmt.Sprintf("[@%s](https://github.com/%s)", name, name)
 }
 
 func refs(rs []Ref) string {

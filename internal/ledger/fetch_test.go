@@ -57,7 +57,7 @@ func TestContributionsPaginatesAndParses(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{Endpoint: srv.URL, Token: "tok", HTTP: srv.Client()}
-	got, err := c.Contributions(context.Background(), "YJ-928", false)
+	got, err := c.Contributions(context.Background(), "YJ-928", Options{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func TestContributionsSurfacesGraphQLErrors(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{Endpoint: srv.URL, Token: "tok", HTTP: srv.Client()}
-	if _, err := c.Contributions(context.Background(), "u", false); err == nil || !strings.Contains(err.Error(), "rate limited") {
+	if _, err := c.Contributions(context.Background(), "u", Options{}); err == nil || !strings.Contains(err.Error(), "rate limited") {
 		t.Fatalf("err = %v, want the GraphQL error", err)
 	}
 }
@@ -96,7 +96,7 @@ func TestContributionsFailsOnHTTPError(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{Endpoint: srv.URL, Token: "bad", HTTP: srv.Client()}
-	if _, err := c.Contributions(context.Background(), "u", false); err == nil || !strings.Contains(err.Error(), "401") {
+	if _, err := c.Contributions(context.Background(), "u", Options{}); err == nil || !strings.Contains(err.Error(), "401") {
 		t.Fatalf("err = %v, want HTTP 401", err)
 	}
 }
@@ -122,7 +122,7 @@ func TestContributionsWithDiscussions(t *testing.T) {
 	defer srv.Close()
 
 	c := &Client{Endpoint: srv.URL, Token: "tok", HTTP: srv.Client()}
-	got, err := c.Contributions(context.Background(), "u", true)
+	got, err := c.Contributions(context.Background(), "u", Options{Discussions: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,5 +131,59 @@ func TestContributionsWithDiscussions(t *testing.T) {
 	}
 	if len(got) != 1 || got[0].Kind != KindDiscussion {
 		t.Fatalf("got %+v, want one discussion", got)
+	}
+}
+
+const reviewPage = `{"data":{"search":{"pageInfo":{"hasNextPage":false,"endCursor":""},"nodes":[
+ {"__typename":"PullRequest","number":595,"title":"feat(cli): add zigflow test","url":"https://github.com/zigflow/zigflow/pull/595",
+  "state":"OPEN","createdAt":"2026-09-22T00:00:00Z","mergedAt":null,"closedAt":null,"author":{"login":"arthurepc"},
+  "repository":{"nameWithOwner":"zigflow/zigflow"},"closingIssuesReferences":{"nodes":[]}}]}}}`
+
+func TestContributionsWithReviews(t *testing.T) {
+	var queries []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables struct {
+				Q string `json:"q"`
+			} `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Fatal(err)
+		}
+		queries = append(queries, body.Variables.Q)
+		if strings.Contains(body.Variables.Q, "reviewed-by:") {
+			fmt.Fprint(w, reviewPage)
+			return
+		}
+		fmt.Fprint(w, `{"data":{"search":{"pageInfo":{"hasNextPage":false},"nodes":[]}}}`)
+	}))
+	defer srv.Close()
+
+	c := &Client{Endpoint: srv.URL, Token: "tok", HTTP: srv.Client()}
+	got, err := c.Contributions(context.Background(), "u", Options{Reviews: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "is:pr reviewed-by:u -author:u -user:u"; len(queries) != 3 || queries[2] != want {
+		t.Fatalf("queries = %q, want the third to be %q", queries, want)
+	}
+	if len(got) != 1 || got[0].Kind != KindReview || got[0].Author != "arthurepc" {
+		t.Fatalf("got %+v, want one review of arthurepc's pull request", got)
+	}
+}
+
+func TestOwnPullRequestsCarryNoAuthor(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, reviewPage)
+	}))
+	defer srv.Close()
+
+	c := &Client{Endpoint: srv.URL, Token: "tok", HTTP: srv.Client()}
+	got, err := c.Contributions(context.Background(), "u", Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got[0].Kind != KindPullRequest || got[0].Author != "" {
+		t.Fatalf("got %+v, want a pull request without an author, so existing ledgers do not change", got[0])
 	}
 }

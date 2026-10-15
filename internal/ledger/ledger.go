@@ -20,6 +20,7 @@ const (
 	KindPullRequest Kind = "pull_request"
 	KindIssue       Kind = "issue"
 	KindDiscussion  Kind = "discussion"
+	KindReview      Kind = "review"
 )
 
 type Ref struct {
@@ -38,6 +39,7 @@ type Entry struct {
 	CreatedAt   time.Time  `json:"createdAt"`
 	ClosedAt    *time.Time `json:"closedAt,omitempty"`
 	Fixes       []Ref      `json:"fixes,omitempty"`
+	Author      string     `json:"author,omitempty"`
 }
 
 type Ledger struct {

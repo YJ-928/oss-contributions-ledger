@@ -1,6 +1,6 @@
 # Open-source contributions
 
-**1 merged pull request** across **2 repositories**, and **2 issues** reported. Took part in **1 discussion**.
+**1 merged pull request** across **2 repositories**, and **2 issues** reported. Took part in **1 discussion**. Reviewed **2 pull requests**.
 
 ## [zigflow/zigflow](https://github.com/zigflow/zigflow)
 
@@ -23,6 +23,13 @@
 | Issue | Title | Status |
 |---|---|---|
 | [#525](https://github.com/zigflow/zigflow/issues/525) | for and try blocks | Open |
+
+### Reviews given
+
+| PR | Author | Title | Status |
+|---|---|---|---|
+| [#624](https://github.com/zigflow/zigflow/pull/624) | [@ShlomitSibony](https://github.com/ShlomitSibony) | run for and try inline | Open |
+| [#588](https://github.com/zigflow/zigflow/pull/588) | ghost | fix: by a deleted account | Merged 2026-09-29 |
 
 ## [solo/repo](https://github.com/solo/repo)
 

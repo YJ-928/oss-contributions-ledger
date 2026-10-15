@@ -29,6 +29,10 @@ func TestMarkdownGolden(t *testing.T) {
 			URL: "https://github.com/zigflow/zigflow/issues/608", CreatedAt: *at("2026-09-29"), ClosedAt: at("2026-09-30")},
 		{Kind: KindDiscussion, Repo: "zigflow/zigflow", Number: 525, Title: "for and try blocks", State: "OPEN",
 			URL: "https://github.com/zigflow/zigflow/issues/525", CreatedAt: *at("2026-09-01")},
+		{Kind: KindReview, Repo: "zigflow/zigflow", Number: 624, Title: "run for and try inline", State: "OPEN",
+			Author: "ShlomitSibony", URL: "https://github.com/zigflow/zigflow/pull/624", CreatedAt: *at("2026-10-11")},
+		{Kind: KindReview, Repo: "zigflow/zigflow", Number: 588, Title: "fix: by a deleted account", State: "MERGED",
+			URL: "https://github.com/zigflow/zigflow/pull/588", CreatedAt: *at("2026-09-28"), ClosedAt: at("2026-09-29")},
 	})
 
 	got := l.Markdown("")

@@ -30,6 +30,7 @@ func run() error {
 	output := flag.String("output", env("INPUT_OUTPUT", "CONTRIBUTIONS.md"), "path of the rendered Markdown")
 	exclude := flag.String("exclude", os.Getenv("INPUT_EXCLUDE"), `comma-separated "owner/repo" or "owner/*" to leave out`)
 	discussions := flag.Bool("discussions", env("INPUT_DISCUSSIONS", "false") == "true", "also record issues the user commented on")
+	reviews := flag.Bool("reviews", env("INPUT_REVIEWS", "false") == "true", "also record pull requests the user reviewed")
 	headerPath := flag.String("header", os.Getenv("INPUT_HEADER"), "Markdown file shown at the top instead of the default title")
 	readme := flag.String("readme", os.Getenv("INPUT_README"), "file whose marked block gets the summary and latest merged pull requests")
 	readmeLatest := flag.String("readme-latest", env("INPUT_README_LATEST", "3"), "how many latest merged pull requests the block lists")
@@ -59,7 +60,7 @@ func run() error {
 		Token:    token,
 		HTTP:     &http.Client{Timeout: 30 * time.Second},
 	}
-	fresh, err := client.Contributions(ctx, *user, *discussions)
+	fresh, err := client.Contributions(ctx, *user, ledger.Options{Discussions: *discussions, Reviews: *reviews})
 	if err != nil {
 		return err
 	}

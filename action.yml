@@ -24,6 +24,9 @@ inputs:
   discussions:
     description: "\"true\" to also record issues you commented on without opening."
     default: "false"
+  reviews:
+    description: "\"true\" to also record pull requests you reviewed without opening, for maintainers and reviewers."
+    default: "false"
   header:
     description: Path of a Markdown file shown at the top instead of the default title.
     default: ""

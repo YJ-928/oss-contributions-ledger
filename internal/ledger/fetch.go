@@ -20,6 +20,7 @@ const searchQuery = `query($q: String!, $after: String) {
       __typename
       ... on PullRequest {
         number title url state createdAt mergedAt closedAt
+        author { login }
         repository { nameWithOwner }
         closingIssuesReferences(first: 10) { nodes { number url } }
       }
@@ -47,7 +48,10 @@ type node struct {
 	CreatedAt   time.Time  `json:"createdAt"`
 	MergedAt    *time.Time `json:"mergedAt"`
 	ClosedAt    *time.Time `json:"closedAt"`
-	Repository  struct {
+	Author      struct {
+		Login string `json:"login"`
+	} `json:"author"`
+	Repository struct {
 		NameWithOwner string `json:"nameWithOwner"`
 	} `json:"repository"`
 	ClosingIssuesReferences struct {
@@ -75,15 +79,24 @@ type query struct {
 	kind   Kind
 }
 
+// Options picks the optional sections; pull requests and issues are always recorded.
+type Options struct {
+	Discussions bool // issues the user commented on without opening
+	Reviews     bool // pull requests the user reviewed without opening
+}
+
 // Contributions returns the user's pull requests and issues in repositories they do not own,
-// and, with discussions, the issues there they commented on without opening.
-func (c *Client) Contributions(ctx context.Context, user string, discussions bool) ([]Entry, error) {
+// plus the discussions and reviews there that opts asks for.
+func (c *Client) Contributions(ctx context.Context, user string, opts Options) ([]Entry, error) {
 	queries := []query{
 		{fmt.Sprintf("is:pr author:%s -user:%s", user, user), KindPullRequest},
 		{fmt.Sprintf("is:issue author:%s -user:%s", user, user), KindIssue},
 	}
-	if discussions {
+	if opts.Discussions {
 		queries = append(queries, query{fmt.Sprintf("is:issue commenter:%s -author:%s -user:%s", user, user, user), KindDiscussion})
+	}
+	if opts.Reviews {
+		queries = append(queries, query{fmt.Sprintf("is:pr reviewed-by:%s -author:%s -user:%s", user, user, user), KindReview})
 	}
 	var entries []Entry
 	for _, q := range queries {
@@ -106,8 +119,11 @@ func (c *Client) search(ctx context.Context, q query) ([]Entry, error) {
 		}
 		for _, n := range resp.Data.Search.Nodes {
 			if e, ok := n.entry(); ok {
-				if e.Kind == KindIssue {
+				switch q.kind {
+				case KindDiscussion:
 					e.Kind = q.kind
+				case KindReview:
+					e.Kind, e.Author = q.kind, n.Author.Login
 				}
 				entries = append(entries, e)
 			}

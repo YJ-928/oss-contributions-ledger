@@ -2,8 +2,8 @@
 
 A GitHub Action that keeps a durable, text-first record of your open-source work in other
 people's repositories. It writes `CONTRIBUTIONS.md`: your pull requests (with the issues they
-fixed), the issues you reported (with their outcome), and optionally the issues you took part in,
-grouped by repository.
+fixed), the issues you reported (with their outcome), and optionally the issues you took part in
+and the pull requests you reviewed as a maintainer or reviewer, grouped by repository.
 
 The data behind it lives in a committed `ledger.json`. Each run adds new work and updates what
 changed, but never drops an entry. A pull request to a repository that is later deleted,
@@ -53,6 +53,7 @@ Then link it from your README: `[All contributions](CONTRIBUTIONS.md)`.
 | `output` | `CONTRIBUTIONS.md` | Path of the rendered Markdown |
 | `exclude` | | Repositories to leave out, as `owner/repo` or `owner/*`, comma-separated |
 | `discussions` | `false` | `true` also records issues you commented on without opening them |
+| `reviews` | `false` | `true` also records pull requests you reviewed without opening them, with their author and status |
 | `header` | | Markdown file shown at the top instead of the default title, for example your roles |
 | `readme` | | A file, usually `README.md`, whose marked block gets the summary and your latest merged pull requests |
 | `readme-latest` | `3` | How many latest merged pull requests the README block lists |
@@ -81,6 +82,14 @@ Latest merged:
 ```
 
 If the markers are missing, the run leaves the file alone and prints a warning.
+
+## Scheduling
+
+- The built-in `GITHUB_TOKEN` is enough: the Action reads only public data. No personal token is needed.
+- GitHub starts scheduled runs late when it is busy, often by several hours, and may skip one. The ledger
+  catches up on the next run, because each run reads your whole history.
+- GitHub pauses schedules in a public repository after 60 days without activity. The ledger's own commits
+  count as activity; if a quiet stretch pauses it, re-enable the workflow on the Actions tab.
 
 ## Run it locally
 
